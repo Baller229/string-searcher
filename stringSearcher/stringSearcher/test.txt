@@ -1,4 +1,2 @@
-BBxBBxxxxx
-xxxxxxxxBB
-BBxxxxxxxx
-xxxxxxxxBB
+aa
+aa

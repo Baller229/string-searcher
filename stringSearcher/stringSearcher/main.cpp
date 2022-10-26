@@ -8,7 +8,7 @@ using namespace std;
 void readFromFile(string file_path);
 void findString(string line, int row, int lineLen, string inputStr);
 //void checkArguments(int argc, char** argv);
-void findAll();
+void findAll(int N);
 bool checkForward(int i, int N);
 bool checkBackward(int i, int N);
 
@@ -30,8 +30,8 @@ int main() {
     //checkArguments(argc, argv);
     string file = "test.txt";
     //readFromFile(file);
-    loadFile("BB");
-    findAll();
+    loadFile("aa");
+    findAll(3);
     cout << "\n" << "Finished Program" << endl;
     
     return 0;
@@ -104,9 +104,8 @@ void findString(string line, int row, int lineLen, string inputStr)
     }
 }
 
-void findAll() 
+void findAll(int N) 
 {
-    int N = 20;
     for (int i = 0; (unsigned)i < ROW.size(); i++)
     {
 
