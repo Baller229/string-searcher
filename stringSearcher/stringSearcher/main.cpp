@@ -11,11 +11,14 @@ void findString(string line, int row, int lineLen, string inputStr);
 void findAll(int N);
 bool checkForward(int i, int N);
 bool checkBackward(int i, int N);
+void checkArguments(int argc, char** argv);
+bool is_digits(string& str);
+void pushSequenceRegex();
 
 //=================================================
 void readFileFast(ifstream& file, void(*lineHandler)(char* str, int length, __int64 absPos), string regex);
 void lineHandler(char* buf, int l, long long pos);
-void loadFile(string regex);
+void loadFile(string regex, string file);
 int min(int buf, int file);
 //=================================================
 
@@ -24,28 +27,33 @@ vector<int> ROW;
 vector<int> RELATIVE_INDEX;
 vector<int> ABSOLUTE_INDEX;
 
+string PATH;
+string SEQUENCE;
+int DISTANCE;
 
-int main() {
-    
-    //checkArguments(argc, argv);
-    string file = "test.txt";
-    //readFromFile(file);
-    loadFile("aa");
-    findAll(3);
-    cout << "\n" << "Finished Program" << endl;
-    
+
+int main(int argc, char** argv) {
+
+    checkArguments(argc, argv);
+    /*cout << "PATH: " << PATH << endl;
+    cout << "SEQUENCE: " << SEQUENCE << endl;s
+    cout << "DISTANCE: " << DISTANCE << endl;*/
+    pushSequenceRegex();
+    loadFile(SEQUENCE, PATH);
+    //cout << "DONE LOAD" << endl;
+    findAll(DISTANCE);
+    //cout << "\n" << "Finished Program" << endl;
+
     return 0;
 }
 
 /*
-                         | row | rel | abs | len |
+                         | row | rel | abs | len |void checkArguments(int argc, char** argv)
     BBxBBxxxxx\n         |  0  |  3  |  3  |  11 |
     xxxxxxxxBB\n         |  1  |  8  |  19 |  11 |
     BBxxxxxxxx\n         |  2  |  0  |  22 |  11 |
     xxxxxxxxBB\n         |  3  |  8  |  41 |  11 |
-
     program.exe "input txt file" BB 3
-
     vystup  1 8
             2 0
 */
@@ -53,17 +61,17 @@ int main() {
 
 void readFromFile(string file_path)
 {
-	ifstream file(file_path);
-	int currentLine = 0;
+    ifstream file(file_path);
+    int currentLine = 0;
     int counterLineLength = 0;
-	string line;
-	vector< vector<int>> v;
+    string line;
+    vector< vector<int>> v;
 
 
-	if (file.is_open())
-	{
-		while (getline(file, line))
-		{
+    if (file.is_open())
+    {
+        while (getline(file, line))
+        {
             //cout << currentLine << ": " << line << " ,line length" << line.length() << endl;
             //cout << counterLineLength << endl;
             if (file.good()) {
@@ -75,36 +83,38 @@ void readFromFile(string file_path)
 
             counterLineLength += (int)line.length() + 1;
             currentLine++;
-		}
-		file.close();
-	}
-	else
-	{
-		cout << "Can't open file" << '\n';
-	}
+        }
+        file.close();
+    }
+    else
+    {
+        cout << "Can't open file" << '\n';
+    }
 }
 
 void findString(string line, int row, int lineLen, string inputStr)
 {
     string input_seq = line;
     string aa = inputStr;
-    regex re("(?=(" + aa + ")).");
-    //regex re("[" + aa +"]");  when i want to find '\n'
+    aa = "bbb";
+    //regex re("(?=(" + aa + ")).");    
+    regex re(inputStr);
+    //regex re("[" + aa +"]");  //when i want to find '\n'
     sregex_iterator next(input_seq.begin(), input_seq.end(), re);
     sregex_iterator end;
     while (next != end) {
         smatch match = *next;
-        
+
         ROW.push_back(row);
-        RELATIVE_INDEX.push_back((int) match.position());
-        ABSOLUTE_INDEX.push_back((int) match.position() + lineLen);
+        RELATIVE_INDEX.push_back((int)match.position());
+        ABSOLUTE_INDEX.push_back((int)match.position() + lineLen);
 
         //cout << match.str(1) << ": " << "\t" << row << "\t" << match.position() << "\t" << match.position() + lineLen << "\n";
         next++;
     }
 }
 
-void findAll(int N) 
+void findAll(int N)
 {
     for (int i = 0; (unsigned)i < ROW.size(); i++)
     {
@@ -128,7 +138,7 @@ void findAll(int N)
             }
         }
 
-        else 
+        else
         {
             if (checkForward(i, N) || checkBackward(i, N))
             {
@@ -137,7 +147,7 @@ void findAll(int N)
                     cout << ROW[i] << "\t" << RELATIVE_INDEX[i] << "\n" << ROW[i + 1] << "\t" << RELATIVE_INDEX[i + 1] << "\n";
                     i++;
                 }
-                else 
+                else
                 {
                     cout << ROW[i] << "\t" << RELATIVE_INDEX[i] << "\n";
                 }
@@ -146,9 +156,9 @@ void findAll(int N)
     }
 }
 
-bool checkForward(int i, int N) 
+bool checkForward(int i, int N)
 {
-   
+
     if (abs(ABSOLUTE_INDEX[i] - ABSOLUTE_INDEX[i + 1]) <= N)
     {
         return true;
@@ -158,7 +168,7 @@ bool checkForward(int i, int N)
 
 bool checkBackward(int i, int N)
 {
-  
+
     if (i == 0)
     {
         return false;
@@ -177,12 +187,12 @@ bool checkBackward(int i, int N)
 //}
 
 void readFileFast(ifstream& file, void(*lineHandler)(char* str, int length, __int64 absPos), string regex) {
-   
+
     long long lineCount = 0;
     int countLen = 0;
     int countLine = 0;
     int oneLineflag = 0;
-    int BUF_SIZE = 5;
+    int BUF_SIZE = 40000;
     string s;
     file.seekg(0, ios::end);
     ifstream::pos_type p = file.tellg();
@@ -205,7 +215,7 @@ void readFileFast(ifstream& file, void(*lineHandler)(char* str, int length, __in
         strStart = strEnd;
         strEnd = -1;
         for (; i < bufLength && i + bufPosInFile < fileSize; i++) {
-            if (buf[i] == '\n' ) {
+            if (buf[i] == '\n') {
                 strEnd = i;
                 oneLineflag = 1;
                 lineCount++;
@@ -215,11 +225,11 @@ void readFileFast(ifstream& file, void(*lineHandler)(char* str, int length, __in
 
         if (strEnd == -1) { // scroll buffer
             if (strStart == -1) {
-                
+
                 s += string(buf + strStart + 1, bufLength);
                 lineHandler(buf + strStart + 1, bufLength, lineCount);
                 bufPosInFile += bufLength;
-                bufLength = min(bufLength, (int)( fileSize - bufPosInFile));
+                bufLength = min(bufLength, (int)(fileSize - bufPosInFile));
                 delete[]buf;
                 buf = new char[bufLength];
                 file.read(buf, bufLength);
@@ -249,7 +259,7 @@ void readFileFast(ifstream& file, void(*lineHandler)(char* str, int length, __in
             countLen += (int)s.length();
             countLine++;
             s = "";
-            
+
 
         }
     }
@@ -268,8 +278,8 @@ void lineHandler(char* buf, int l, long long  pos) {
     /*printf(s.c_str());*/
 }
 
-void loadFile(string regex) {
-    ifstream infile("test.txt");
+void loadFile(string regex, string file) {
+    ifstream infile(file);
     readFileFast(infile, lineHandler, regex);
 }
 
@@ -280,4 +290,76 @@ int min(int buf, int file)
         return buf;
     }
     return file;
+}
+
+//================================================================
+//	CHECK COMMAND LINE ARGUMENTS
+//================================================================
+
+void checkArguments(int argc, char** argv)
+{
+    //int maxLen = 256;
+    //int outIndex = 0;
+    
+    // check if there are all three arguments | <PATH> | X | N | no more no less
+    if (argc != 4)
+    {
+        exit(1);
+    }
+    ifstream file(argv[1]);
+    bool fileTest = file.is_open();
+    // check if <PATH> exists or not
+    if (fileTest == 0)
+    {
+        exit(1);
+    }
+    string X = argv[2];
+    // check if sequence is less than 256, but greater than 0
+    if (X.length() <= 0 || X.length() >= 256)
+    {
+        exit(1);
+    }
+    string sN = argv[3];
+    //check if N is full of numbers only
+    if (!(is_digits(sN)))
+    {
+        exit(1);
+    }
+    uint64_t N = stoi(sN);
+    //check if N is 0 > N < uint32.max()
+    if (N <= 0 || (unsigned)N >= numeric_limits<uint32_t>::max())
+    {
+        exit(1);
+    }
+
+    PATH = argv[1];
+    SEQUENCE = argv[2];
+    DISTANCE = (int)N;
+
+}
+//================================================================
+
+bool is_digits(string& str)
+{
+    return all_of(str.begin(), str.end(), ::isdigit); 
+}
+
+void pushSequenceRegex()
+{
+    if (SEQUENCE[0] == '\\' && SEQUENCE[1] == 'n')
+    {
+        //cout << "Print new lines" << endl;
+        SEQUENCE = "(\n)";
+    }
+    else if (SEQUENCE == " ")
+    {
+        //cout << "Print whitespaces" << endl;
+        SEQUENCE = "[\\^S, \\^n]";
+    }
+    else 
+    {
+        //cout << "Print sequence" << endl;
+        SEQUENCE = "(?=(" + SEQUENCE + ")).";
+       
+    }
 }
