@@ -5,7 +5,6 @@
 #include <limits>
 using namespace std;
 
-void readFromFile(string file_path);
 void findString(string line, int row, int lineLen, string inputStr);
 //void checkArguments(int argc, char** argv);
 void findAll(int N);
@@ -16,8 +15,7 @@ bool is_digits(string& str);
 void pushSequenceRegex();
 
 //=================================================
-void readFileFast(ifstream& file, void(*lineHandler)(char* str, int length, __int64 absPos), string regex);
-void lineHandler(char* buf, int l, long long pos);
+void readFileFast(ifstream& file, string regex);
 void loadFile(string regex, string file);
 int min(int buf, int file);
 //=================================================
@@ -58,45 +56,9 @@ int main(int argc, char** argv) {
             2 0
 */
 
-
-void readFromFile(string file_path)
-{
-    ifstream file(file_path);
-    int currentLine = 0;
-    int counterLineLength = 0;
-    string line;
-    vector< vector<int>> v;
-
-
-    if (file.is_open())
-    {
-        while (getline(file, line))
-        {
-            //cout << currentLine << ": " << line << " ,line length" << line.length() << endl;
-            //cout << counterLineLength << endl;
-            if (file.good()) {
-                line += "\n";
-                cout << currentLine << ": " << line << ": <newline>: " << (int)line.length() << endl;
-            }
-            cout << currentLine << ": " << line << (int)line.length() << endl;
-            findString(line, currentLine, counterLineLength, "BB");
-
-            counterLineLength += (int)line.length() + 1;
-            currentLine++;
-        }
-        file.close();
-    }
-    else
-    {
-        cout << "Can't open file" << '\n';
-    }
-}
-
 void findString(string line, int row, int lineLen, string inputStr)
 {
     string input_seq = line;
-    string aa = inputStr;
-    aa = "bbb";
     //regex re("(?=(" + aa + ")).");    
     regex re(inputStr);
     //regex re("[" + aa +"]");  //when i want to find '\n'
@@ -124,7 +86,7 @@ void findAll(int N)
         {
             if (checkBackward(i, N))
             {
-                cout << ROW[i] << "\t" << RELATIVE_INDEX[i] << "\n";
+                cout << ROW[i] << " " << RELATIVE_INDEX[i] << "\n";
             }
         }
 
@@ -133,7 +95,7 @@ void findAll(int N)
         {
             if (checkForward(i, N))
             {
-                cout << ROW[i] << "\t" << RELATIVE_INDEX[i] << "\n" << ROW[i + 1] << "\t" << RELATIVE_INDEX[i + 1] << "\n";
+                cout << ROW[i] << " " << RELATIVE_INDEX[i] << "\n" << ROW[i + 1] << " " << RELATIVE_INDEX[i + 1] << "\n";
                 i++;
             }
         }
@@ -144,12 +106,12 @@ void findAll(int N)
             {
                 if (checkForward(i, N))
                 {
-                    cout << ROW[i] << "\t" << RELATIVE_INDEX[i] << "\n" << ROW[i + 1] << "\t" << RELATIVE_INDEX[i + 1] << "\n";
+                    cout << ROW[i] << " " << RELATIVE_INDEX[i] << "\n" << ROW[i + 1] << " " << RELATIVE_INDEX[i + 1] << "\n";
                     i++;
                 }
                 else
                 {
-                    cout << ROW[i] << "\t" << RELATIVE_INDEX[i] << "\n";
+                    cout << ROW[i] << " " << RELATIVE_INDEX[i] << "\n";
                 }
             }
         }
@@ -186,7 +148,7 @@ bool checkBackward(int i, int N)
 //
 //}
 
-void readFileFast(ifstream& file, void(*lineHandler)(char* str, int length, __int64 absPos), string regex) {
+void readFileFast(ifstream& file, string regex) {
 
     long long lineCount = 0;
     int countLen = 0;
@@ -197,9 +159,9 @@ void readFileFast(ifstream& file, void(*lineHandler)(char* str, int length, __in
     file.seekg(0, ios::end);
     ifstream::pos_type p = file.tellg();
 #ifdef WIN32
-    __int64 fileSize = *(__int64*)(((char*)&p) + 8);
+    long long    fileSize = *(long long   *)(((char*)&p) + 8);
 #else
-    __int64 fileSize = p;
+    long long  fileSize = p;
 #endif
     file.seekg(0, ios::beg);
     BUF_SIZE = min(BUF_SIZE, (int)fileSize);
@@ -209,7 +171,7 @@ void readFileFast(ifstream& file, void(*lineHandler)(char* str, int length, __in
 
     int strEnd = -1;
     int strStart;
-    __int64 bufPosInFile = 0;
+    long long    bufPosInFile = 0;
     while (bufLength > 0) {
         int i = strEnd + 1;
         strStart = strEnd;
@@ -227,7 +189,6 @@ void readFileFast(ifstream& file, void(*lineHandler)(char* str, int length, __in
             if (strStart == -1) {
 
                 s += string(buf + strStart + 1, bufLength);
-                lineHandler(buf + strStart + 1, bufLength, lineCount);
                 bufPosInFile += bufLength;
                 bufLength = min(bufLength, (int)(fileSize - bufPosInFile));
                 delete[]buf;
@@ -253,7 +214,6 @@ void readFileFast(ifstream& file, void(*lineHandler)(char* str, int length, __in
             }
         }
         else {
-            lineHandler(buf + strStart + 1, strEnd - strStart, lineCount);
             s += string(buf + strStart + 1, strEnd - strStart);
             findString(s, countLine, countLen, regex);
             countLen += (int)s.length();
@@ -268,19 +228,13 @@ void readFileFast(ifstream& file, void(*lineHandler)(char* str, int length, __in
     {
         findString(s, countLine, countLen, regex);
     }
+    file.close();
 }
 
-void lineHandler(char* buf, int l, long long  pos) {
-    pos = 0;
-    if (buf == 0) return;
-    string s = string(buf, l);
-    //cout << s;
-    /*printf(s.c_str());*/
-}
 
 void loadFile(string regex, string file) {
     ifstream infile(file);
-    readFileFast(infile, lineHandler, regex);
+    readFileFast(infile, regex);
 }
 
 int min(int buf, int file)
